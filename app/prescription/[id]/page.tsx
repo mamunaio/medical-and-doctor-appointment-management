@@ -43,10 +43,10 @@ export default function Prescription() {
                 <Download className="w-4 h-4" /> Download
               </button>
               <button className="w-full bg-medical-blue/10 text-medical-blue py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-medical-blue/20 hover:bg-medical-blue hover:text-white transition-all">
-                <Smartphone className="w-4 h-4" /> SMS পাঠান
+                <Smartphone className="w-4 h-4" /> Send SMS
               </button>
               <button className="w-full bg-purple-hms/10 text-purple-hms py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-purple-hms/20 hover:bg-purple-hms hover:text-white transition-all">
-                <Mail className="w-4 h-4" /> Email পাঠান
+                <Mail className="w-4 h-4" /> Send Email
               </button>
             </div>
 
@@ -161,17 +161,17 @@ export default function Prescription() {
                       </div>
                     ))}
                     <button className="w-full py-4 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center gap-2 text-gray-400 hover:text-medical-green hover:border-medical-green hover:bg-medical-green/5 transition-all no-print">
-                      <Plus className="w-4 h-4" /> + ওষুধ যোগ করুন
+                      <Plus className="w-4 h-4" /> + Add Medicine
                     </button>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest border-b border-gray-200 pb-2">Advice</h3>
                     <ul className="text-xs font-medium text-gray-600 space-y-2 list-disc pl-4">
-                      <li>লবণ কম খাবেন (Low salt diet)</li>
-                      <li>প্রতিদিন অন্তত ৩০ মিনিট হাঁটবেন</li>
-                      <li>ধূমপান থেকে বিরত থাকুন</li>
-                      <li>পর্যাপ্ত ঘুম নিশ্চিত করুন</li>
+                      <li>Low salt diet (Reduce sodium intake)</li>
+                      <li>Walk at least 30 minutes daily</li>
+                      <li>Refrain from smoking and tobacco</li>
+                      <li>Ensure adequate sound sleep (7-8 hours)</li>
                     </ul>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export default function Prescription() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-medical-blue mb-4">
                     <Calendar className="w-4 h-4" />
-                    পরবর্তী ভিজিট: ১৫ জুন ২০২৪
+                    Next Visit: 15 June 2024
                   </div>
                   <div className="flex items-center gap-3 no-print">
                     <div className="w-24 h-24 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center justify-center text-[10px] text-gray-400 font-bold uppercase text-center p-2">

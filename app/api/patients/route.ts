@@ -42,8 +42,10 @@ async function createPatient(req: NextRequest, user: AuthUser) {
     await dbConnect();
     const body = await req.json();
 
-    const { data, error } = validateRequest(patientSchema, body);
+    const { data: rawData, error } = validateRequest(patientSchema, body);
     if (error) return apiResponse.error("Validation failed", 400);
+
+    const data = rawData as any;
 
     // Auto-generate patient ID
     data.patientId = await autoId.generatePatientId();

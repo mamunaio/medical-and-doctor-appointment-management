@@ -6,6 +6,14 @@ import { Activity, Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
+const DEMO_CREDENTIALS: Record<string, { email: string; pass: string; title: string }> = {
+  Admin: { email: "admin@injaazh.com", pass: "injaazh_admin", title: "Admin Access Credentials" },
+  Doctor: { email: "akram@injaazh.com", pass: "doctor123", title: "Doctor Access Credentials" },
+  Nurse: { email: "nurse@injaazh.com", pass: "nurse123", title: "Nurse Access Credentials" },
+  Receptionist: { email: "receptionist@injaazh.com", pass: "receptionist123", title: "Receptionist Access Credentials" },
+  Patient: { email: "patient@injaazh.com", pass: "patient123", title: "Patient Access Credentials" },
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
@@ -30,6 +38,15 @@ export default function LoginPage() {
     }));
     setRandomStyles(styles);
   }, []);
+
+  // Update credentials and input fields when active role changes
+  useEffect(() => {
+    const creds = DEMO_CREDENTIALS[role];
+    if (creds) {
+      setEmail(creds.email);
+      setPassword(creds.pass);
+    }
+  }, [role]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,9 +130,11 @@ export default function LoginPage() {
 
           <form className="space-y-6" onSubmit={handleLogin}>
             <div className="bg-medical-blue/5 border border-medical-blue/20 p-4 rounded-xl mb-6">
-              <p className="text-[10px] font-black text-medical-blue uppercase tracking-widest mb-1">Admin Access Credentials</p>
-              <p className="text-sm font-bold text-gray-700">Email: <span className="text-medical-blue">admin@injaazh.com</span></p>
-              <p className="text-sm font-bold text-gray-700">Password: <span className="text-medical-blue">injaazh_admin</span></p>
+              <p className="text-[10px] font-black text-medical-blue uppercase tracking-widest mb-1">
+                {DEMO_CREDENTIALS[role]?.title || "Access Credentials"}
+              </p>
+              <p className="text-sm font-bold text-gray-700">Email: <span className="text-medical-blue">{DEMO_CREDENTIALS[role]?.email}</span></p>
+              <p className="text-sm font-bold text-gray-700">Password: <span className="text-medical-blue">{DEMO_CREDENTIALS[role]?.pass}</span></p>
             </div>
             
             {error && (

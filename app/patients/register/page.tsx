@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 const steps = [
   { id: 1, title: "Personal Info", icon: User },
@@ -34,6 +35,7 @@ export default function PatientRegistration() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { token } = useAuthStore();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -83,7 +85,10 @@ export default function PatientRegistration() {
     try {
       const res = await fetch("/api/patients", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(formData),
       });
 

@@ -14,24 +14,37 @@ import {
   ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import Link from "next/link";
 
 export default function PatientList() {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { token } = useAuthStore();
 
   const fetchPatients = async (query = "") => {
+    if (!token) return;
     setLoading(true);
-    const res = await fetch(`/api/patients?search=${query}`);
+    const res = await fetch(`/api/patients?search=${query}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const data = await res.json();
-    setPatients(data);
+    if (data.success) {
+      setPatients(data.data || []);
+    } else {
+      setPatients([]);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    if (token) {
+      fetchPatients();
+    }
+  }, [token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

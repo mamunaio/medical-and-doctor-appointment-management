@@ -19,28 +19,54 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import { use } from "react";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function PatientDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { token } = useAuthStore();
 
   useEffect(() => {
-    if (!id) return;
-    fetch(`/api/patients/${id}`)
+    if (!id || !token) return;
+    fetch(`/api/patients/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+        if (data.success && data.data && data.data.patient) {
           setPatient(data.data.patient);
         }
         setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
       });
-  }, [id]);
+  }, [id, token]);
 
   if (loading) {
     return (
       <div className="flex min-h-screen bg-light-bg items-center justify-center">
         <Loader2 className="w-12 h-12 text-medical-green animate-spin" />
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex min-h-screen bg-light-bg">
+        <HMSSidebar />
+        <div className="flex-1 flex flex-col">
+          <HMSHeader title="Patient Profile" />
+          <main className="p-6 flex flex-col items-center justify-center gap-4 min-h-[500px]">
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Patient not found or unauthorized access</p>
+            <Link href="/patients" className="bg-medical-green text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all">
+              Back to Patient List
+            </Link>
+          </main>
+        </div>
       </div>
     );
   }

@@ -13,8 +13,10 @@ export async function POST(req: NextRequest) {
     await dbConnect();
     const body = await req.json();
     
-    const { data, error } = validateRequest(loginSchema, body);
+    const { data: rawData, error } = validateRequest(loginSchema, body);
     if (error) return apiResponse.error("Validation failed", 400);
+
+    const data = rawData as any;
 
     const user = await User.findOne({ email: data.email });
     if (!user) return apiResponse.error("Invalid credentials", 401);

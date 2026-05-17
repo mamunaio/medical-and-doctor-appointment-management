@@ -111,6 +111,53 @@ const seed = async () => {
       }
     ]);
 
+    // 4.1 Nurse
+    const nursePass = await bcrypt.hash('nurse123', 10);
+    const nurse = await User.create({
+      name: 'Nurse Emily',
+      email: 'nurse@injaazh.com',
+      phone: '01733333333',
+      passwordHash: nursePass,
+      role: 'nurse',
+      isVerified: true,
+      staffProfile: {
+        employeeId: 'NUR-001',
+        department: cardiologyId,
+        designation: 'Senior Staff Nurse',
+        joinDate: new Date(),
+        shift: 'morning'
+      }
+    });
+
+    // 4.2 Receptionist
+    const receptionistPass = await bcrypt.hash('receptionist123', 10);
+    const receptionist = await User.create({
+      name: 'Receptionist Sarah',
+      email: 'receptionist@injaazh.com',
+      phone: '01744444444',
+      passwordHash: receptionistPass,
+      role: 'receptionist',
+      isVerified: true,
+      staffProfile: {
+        employeeId: 'REC-001',
+        department: cardiologyId,
+        designation: 'Front Desk Officer',
+        joinDate: new Date(),
+        shift: 'morning'
+      }
+    });
+
+    // 4.3 Patient User Account
+    const patientPass = await bcrypt.hash('patient123', 10);
+    const patientUser = await User.create({
+      name: 'Abul Kashem',
+      email: 'patient@injaazh.com',
+      phone: '01911111111',
+      passwordHash: patientPass,
+      role: 'patient',
+      isVerified: true
+    });
+
     // 5. Beds
     const wards = ['general', 'cabin', 'icu', 'ccu', 'emergency'];
     const beds = [];
@@ -144,8 +191,10 @@ const seed = async () => {
     // 8. Patients
     const patients = await Patient.insertMany([
       {
+        userId: patientUser._id,
         patientId: 'PAT-2024-00001',
         name: 'Abul Kashem',
+        email: 'patient@injaazh.com',
         phone: '01911111111',
         gender: 'male',
         age: 45,

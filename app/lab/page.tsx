@@ -61,10 +61,10 @@ export default function Laboratory() {
             <div className="space-y-6 animate-in fade-in duration-500">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                  { label: "Pending Samples", val: "২৪", color: "amber" },
-                  { label: "Processing", val: "১২", color: "blue" },
-                  { label: "Ready Reports", val: "৩৮", color: "green" },
-                  { label: "Urgent (STAT)", val: "০৫", color: "red" },
+                  { label: "Pending Samples", val: "24", color: "amber" },
+                  { label: "Processing", val: "12", color: "blue" },
+                  { label: "Ready Reports", val: "38", color: "green" },
+                  { label: "Urgent (STAT)", val: "05", color: "red" },
                 ].map((s, i) => (
                   <div key={i} className="bg-white p-6 rounded-2xl border border-border-hms shadow-sm">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>

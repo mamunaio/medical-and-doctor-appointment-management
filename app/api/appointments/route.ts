@@ -42,8 +42,10 @@ async function createAppointment(req: NextRequest, user: AuthUser) {
     await dbConnect();
     const body = await req.json();
 
-    const { data, error } = validateRequest(appointmentSchema, body);
+    const { data: rawData, error } = validateRequest(appointmentSchema, body);
     if (error) return apiResponse.error("Validation failed", 400);
+
+    const data = rawData as any;
 
     // Check availability (basic)
     const existing = await Appointment.findOne({ 
