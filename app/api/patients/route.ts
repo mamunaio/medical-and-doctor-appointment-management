@@ -42,17 +42,37 @@ async function createPatient(req: NextRequest, user: AuthUser) {
     await dbConnect();
     const body = await req.json();
 
+    console.log("Received Patient Body:", JSON.stringify(body));
     const { data: rawData, error } = validateRequest(patientSchema, body);
-    if (error) return apiResponse.error("Validation failed", 400);
+    console.log("Validation output:", { hasData: !!rawData, error });
+
+    if (error || !rawData) {
+      console.error("Zod Validation Error:", error);
+      const errorMessage = Array.isArray(error) && error.length > 0 ? `${error[0].path.join('.')}: ${error[0].message}` : "Validation failed or empty data";
+      return apiResponse.error(`Validation Error: ${errorMessage}`, 400);
+    }
 
     const data = rawData as any;
+
+    // Prevent duplicate emails
+    if (data.email) {
+      const existingUser = await User.findOne({ email: data.email });
+      const existingPatient = await Patient.findOne({ email: data.email });
+      if (existingUser || existingPatient) {
+        return apiResponse.error("A user or patient with this email already exists. Please use a different email.", 400);
+      }
+    }
 
     // Auto-generate patient ID
     data.patientId = await autoId.generatePatientId();
     data.registeredBy = user.userId;
 
+    // Sanitize empty dates
+    if (data.dateOfBirth === "") delete data.dateOfBirth;
+    if (data.insurance && data.insurance.validity === "") delete data.insurance.validity;
+
     const patient = await Patient.create(data);
-    
+
     // Create a patient user account if email is provided
     if (data.email) {
       await User.create({
@@ -71,5 +91,5 @@ async function createPatient(req: NextRequest, user: AuthUser) {
   }
 }
 
-export const GET = requireRole(['admin', 'doctor', 'nurse', 'receptionist'], getPatients);
-export const POST = requireRole(['receptionist', 'admin'], createPatient);
+export const GET = requireRole(['admin', 'super_admin', 'doctor', 'nurse', 'receptionist'], getPatients);
+export const POST = requireRole(['receptionist', 'admin', 'super_admin', 'doctor'], createPatient);

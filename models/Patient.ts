@@ -29,30 +29,20 @@ const PatientSchema = new Schema({
     phone: String
   },
 
-  allergies: [String],
-  chronicDiseases: [String],
-  previousSurgeries: [{
-    procedure: String,
-    date: Date,
-    hospital: String,
-    notes: String
-  }],
-  currentMedications: [{
-    medicineName: String,
-    dose: String,
-    frequency: String,
-    startDate: Date
-  }],
+  medicalHistory: {
+    allergies: String,
+    chronicDiseases: String,
+    pastSurgeries: String,
+    currentMedications: String,
+  },
   familyHistory: [String],
   smoking: { type: Boolean, default: false },
   alcohol: { type: Boolean, default: false },
 
   insurance: {
-    hasInsurance: { type: Boolean, default: false },
-    provider: String,
+    providerName: String,
     policyNumber: String,
-    expiryDate: Date,
-    coverageAmount: Number
+    validity: Date
   },
 
   stats: {

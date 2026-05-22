@@ -23,6 +23,7 @@ export default function LoginPage() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const roles = ["Admin", "Doctor", "Nurse", "Receptionist", "Patient"];
 
@@ -175,8 +176,14 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-medical-green focus:ring-medical-green" />
+              <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  id="rememberMe"
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-medical-green focus:ring-medical-green cursor-pointer" 
+                />
                 <span className="text-sm text-gray-600 font-medium">Remember Me</span>
               </label>
               <a href="#" className="text-sm font-bold text-medical-green hover:underline">Forgot Password?</a>

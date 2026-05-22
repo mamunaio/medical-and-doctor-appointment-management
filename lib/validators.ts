@@ -10,15 +10,32 @@ export const patientSchema = z.object({
   nativeName: z.string().optional(),
   phone: z.string().min(10),
   email: z.string().email().optional().or(z.literal('')),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z.string().optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other']),
   bloodGroup: z.string().optional(),
   nidNumber: z.string().optional(),
+  maritalStatus: z.string().optional(),
   address: z.object({
     division: z.string().optional(),
     district: z.string().optional(),
     thana: z.string().optional(),
     village: z.string().optional(),
+  }).optional(),
+  emergencyContact: z.object({
+    name: z.string().optional(),
+    relation: z.string().optional(),
+    phone: z.string().optional(),
+  }).optional(),
+  medicalHistory: z.object({
+    allergies: z.string().optional(),
+    chronicDiseases: z.string().optional(),
+    pastSurgeries: z.string().optional(),
+    currentMedications: z.string().optional(),
+  }).optional(),
+  insurance: z.object({
+    providerName: z.string().optional(),
+    policyNumber: z.string().optional(),
+    validity: z.string().optional().or(z.literal('')),
   }).optional(),
 });
 
@@ -32,9 +49,10 @@ export const appointmentSchema = z.object({
 });
 
 export const validateRequest = (schema: z.ZodSchema, data: any) => {
-  try {
-    return { data: schema.parse(data), error: null };
-  } catch (error: any) {
-    return { data: null, error: error.errors };
+  const result = schema.safeParse(data);
+  if (result.success) {
+    return { data: result.data, error: null };
+  } else {
+    return { data: null, error: result.error.errors };
   }
 };

@@ -18,11 +18,19 @@ import {
   Clock,
   Sparkles,
   Heart,
-  Stethoscope
+  Stethoscope,
+  Volume2,
+  VolumeX,
+  CheckCircle2,
+  X,
+  LogOut,
+  User,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useEmergencyStore } from "@/lib/store/useEmergencyStore";
+import { useNotificationStore } from "@/lib/store/useNotificationStore";
 import EmergencyModal from "./EmergencyModal";
 
 interface HMSHeaderProps {
@@ -58,24 +66,89 @@ const SEARCH_DATABASE = {
 
 export default function HMSHeader({ title }: HMSHeaderProps) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { activeSiren, sirenType, sirenEta, clearSiren } = useEmergencyStore();
+  const { notifications, unreadCount, soundEnabled, toggleSound, markAsRead, markAllAsRead } = useNotificationStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
-  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Handle click outside to close search dropdown
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const notifWrapperRef = useRef<HTMLDivElement>(null);
+  const profileWrapperRef = useRef<HTMLDivElement>(null);
+  
+  // Audio synthesizer refs
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Handle click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
         setIsSearchFocused(false);
       }
+      if (notifWrapperRef.current && !notifWrapperRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
+      if (profileWrapperRef.current && !profileWrapperRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Play Ambulance Siren Audio
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (activeSiren) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return;
+        
+        const ctx = new AudioContextClass();
+        audioCtxRef.current = ctx;
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.15; // Set volume
+        gainNode.connect(ctx.destination);
+
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.connect(gainNode);
+        osc.start();
+
+        let isHigh = true;
+        interval = setInterval(() => {
+          if (ctx.state === "running") {
+            // Hi-Low European Ambulance frequencies
+            osc.frequency.setValueAtTime(isHigh ? 960 : 770, ctx.currentTime);
+            isHigh = !isHigh;
+          }
+        }, 500);
+
+      } catch (err) {
+        console.error("Siren audio failed to play:", err);
+      }
+    } else {
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(console.error);
+        audioCtxRef.current = null;
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeSiren]);
 
   // Filter Search Database
   const filteredPatients = searchQuery 
@@ -294,35 +367,166 @@ export default function HMSHeader({ title }: HMSHeaderProps) {
             <span className="text-xs font-black uppercase tracking-widest">Emergency</span>
           </button>
 
-          <div className="relative cursor-pointer group">
-            <div className="p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <div ref={notifWrapperRef} className="relative cursor-pointer group">
+            <div 
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+            >
               <Bell className="w-4 h-4 text-gray-500" />
-              <span className="absolute top-1 right-1 w-4 h-4 bg-medical-blue text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                5
-              </span>
+              {mounted && unreadCount() > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-medical-blue text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                  {unreadCount()}
+                </span>
+              )}
             </div>
+
+            {/* Notification Dropdown */}
+            {isNotifOpen && (
+              <div className="absolute top-12 right-0 w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-top-4 duration-200 cursor-default">
+                <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-black text-gray-800 text-sm">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={toggleSound}
+                      title={mounted && soundEnabled ? "Mute Sounds" : "Unmute Sounds"}
+                      className={cn("p-1.5 rounded-lg transition-colors", (mounted && soundEnabled) ? "text-medical-green hover:bg-green-100" : "text-gray-400 hover:bg-gray-200")}
+                    >
+                      {mounted && soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                    </button>
+                    <button 
+                      onClick={markAllAsRead}
+                      className="p-1.5 text-medical-blue hover:bg-blue-100 rounded-lg transition-colors"
+                      title="Mark all as read"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-xs flex flex-col items-center gap-2">
+                      <Bell className="w-6 h-6 text-gray-300" />
+                      <span>No new notifications</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col">
+                      {notifications.slice(0, 5).map(n => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => {
+                            if (!n.isRead) markAsRead(n.id);
+                            if (n.link) {
+                              setIsNotifOpen(false);
+                              router.push(n.link);
+                            }
+                          }}
+                          className={cn(
+                            "p-3.5 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer",
+                            !n.isRead ? "bg-blue-50/30" : ""
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-xs font-bold text-gray-800 line-clamp-1">{n.title}</p>
+                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-medical-blue shrink-0 mt-1"></span>}
+                          </div>
+                          <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{n.message}</p>
+                          <p className="text-[9px] font-bold text-gray-400 mt-2 uppercase">
+                            {new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-2 bg-gray-50 border-t border-gray-100 text-center">
+                  <button 
+                    onClick={() => {
+                      setIsNotifOpen(false);
+                      router.push('/notifications');
+                    }}
+                    className="text-xs font-black text-medical-blue hover:underline uppercase tracking-widest"
+                  >
+                    View All Notifications
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="h-8 w-px bg-border-hms mx-1"></div>
 
-          {/* Dynamic TopBar User Profile Card */}
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 border border-border-hms flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || "Dr. Sarah Johnson")}`} 
-                alt="Avatar" 
-                className="w-full h-full object-cover"
-              />
+          {/* Dynamic TopBar User Profile Card & Dropdown */}
+          <div ref={profileWrapperRef} className="relative">
+            <div 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-3 cursor-pointer group p-1.5 pr-3 rounded-2xl hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gray-100 border border-border-hms flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent((mounted && user?.name) || "Dr. Sarah Johnson")}`} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-sm font-bold text-gray-900 group-hover:text-medical-green transition-colors flex items-center gap-1 leading-tight">
+                  {(mounted && user?.name) || "Dr. Sarah Johnson"}
+                  <ChevronDown className={cn("w-4 h-4 text-gray-400 group-hover:text-medical-green transition-all", isProfileOpen && "rotate-180")} />
+                </p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
+                  {(mounted && getRoleTitle(user?.role)) || "HOSPITAL STAFF"}
+                </p>
+              </div>
             </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-bold text-gray-900 group-hover:text-medical-green transition-colors flex items-center gap-1 leading-tight">
-                {user?.name || "Dr. Sarah Johnson"}
-                <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-medical-green transition-all" />
-              </p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
-                {getRoleTitle(user?.role)}
-              </p>
-            </div>
+
+            {isProfileOpen && (
+              <div className="absolute top-14 right-0 w-64 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
+                <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 mb-3 shadow-sm overflow-hidden p-1">
+                    <img 
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent((mounted && user?.name) || "Dr. Sarah Johnson")}`} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                  </div>
+                  <p className="text-sm font-black text-gray-900">{(mounted && user?.name) || "Dr. Sarah Johnson"}</p>
+                  <p className="text-xs text-gray-500 font-medium mb-2">{(mounted && user?.email) || "doctor@injaazh.com"}</p>
+                  <span className="text-[10px] bg-medical-green/10 text-medical-green font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                    {(mounted && getRoleTitle(user?.role)) || "HOSPITAL STAFF"}
+                  </span>
+                </div>
+                
+                <div className="p-2 space-y-1">
+                  <button 
+                    onClick={() => { setIsProfileOpen(false); router.push('/profile'); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-700 hover:text-medical-blue hover:bg-blue-50 rounded-xl transition-all"
+                  >
+                    <User className="w-4 h-4" /> My Profile
+                  </button>
+                  <button 
+                    onClick={() => { setIsProfileOpen(false); router.push('/settings'); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
+                  >
+                    <Settings className="w-4 h-4" /> Account Settings
+                  </button>
+                </div>
+                
+                <div className="p-2 border-t border-gray-100 bg-red-50/30">
+                  <button 
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      logout();
+                      router.push('/auth/login');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-black text-emergency-red hover:bg-red-100 rounded-xl transition-all"
+                  >
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>

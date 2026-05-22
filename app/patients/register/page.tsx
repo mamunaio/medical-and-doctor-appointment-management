@@ -35,6 +35,8 @@ export default function PatientRegistration() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { token } = useAuthStore();
 
   const [formData, setFormData] = useState({
@@ -57,6 +59,17 @@ export default function PatientRegistration() {
       name: "",
       relation: "Spouse",
       phone: ""
+    },
+    medicalHistory: {
+      allergies: "",
+      chronicDiseases: "",
+      pastSurgeries: "",
+      currentMedications: ""
+    },
+    insurance: {
+      providerName: "",
+      policyNumber: "",
+      validity: ""
     }
   });
 
@@ -73,6 +86,14 @@ export default function PatientRegistration() {
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setPhotoPreview(imageUrl);
     }
   };
 
@@ -94,11 +115,11 @@ export default function PatientRegistration() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to register patient");
+        throw new Error(data.message || data.error || "Failed to register patient");
       }
 
-      const data = await res.json();
-      router.push(`/patients/${data._id}`);
+      const responseData = await res.json();
+      router.push(`/patients/${responseData.data._id}`);
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -150,9 +171,25 @@ export default function PatientRegistration() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
-                      <div className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-medical-green transition-colors cursor-pointer relative overflow-hidden">
-                        <Camera className="w-10 h-10 text-gray-300 group-hover:text-medical-green transition-colors" />
-                        <span className="text-xs font-bold text-gray-400 group-hover:text-medical-green">Photo Upload</span>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                      />
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-medical-green transition-colors cursor-pointer relative overflow-hidden"
+                      >
+                        {photoPreview ? (
+                          <img src={photoPreview} alt="Patient Photo Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <>
+                            <Camera className="w-10 h-10 text-gray-300 group-hover:text-medical-green transition-colors" />
+                            <span className="text-xs font-bold text-gray-400 group-hover:text-medical-green">Photo Upload</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -365,23 +402,58 @@ export default function PatientRegistration() {
                   <h2 className="text-3xl font-black text-gray-900 mb-4">Complete Registration</h2>
                   <p className="text-gray-500 mb-8 text-lg">Please verify the information provided. A unique Patient ID will be generated upon submission.</p>
                   
-                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 text-left space-y-4 mb-8">
-                    <div className="flex justify-between border-b border-gray-200 pb-2">
-                      <span className="text-gray-500 font-medium">Patient Name:</span>
-                      <span className="text-gray-900 font-bold">{formData.name || "N/A"}</span>
+                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 text-left space-y-6 mb-8 max-h-[400px] overflow-y-auto no-scrollbar">
+                    
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-medical-blue mb-3 border-b border-gray-200 pb-2">Personal Information</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Patient Name</span>
+                          <span className="text-sm text-gray-900 font-bold">{formData.name || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Date of Birth</span>
+                          <span className="text-sm text-gray-900 font-bold">{formData.dateOfBirth || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Blood Group</span>
+                          <span className="text-sm text-medical-green font-black">{formData.bloodGroup}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Phone Number</span>
+                          <span className="text-sm text-gray-900 font-bold">{formData.phone || "N/A"}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between border-b border-gray-200 pb-2">
-                      <span className="text-gray-500 font-medium">Date of Birth:</span>
-                      <span className="text-gray-900 font-bold">{formData.dateOfBirth || "N/A"}</span>
+
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-medical-blue mb-3 border-b border-gray-200 pb-2">Medical History</h3>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Allergies</span>
+                          <span className="text-sm text-gray-900 font-medium">{formData.medicalHistory.allergies || "None reported"}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Chronic Diseases</span>
+                          <span className="text-sm text-gray-900 font-medium">{formData.medicalHistory.chronicDiseases || "None reported"}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between border-b border-gray-200 pb-2">
-                      <span className="text-gray-500 font-medium">Blood Group:</span>
-                      <span className="text-medical-green font-black">{formData.bloodGroup}</span>
+
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-medical-blue mb-3 border-b border-gray-200 pb-2">Insurance Info</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Provider Name</span>
+                          <span className="text-sm text-gray-900 font-bold">{formData.insurance.providerName || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase">Policy Number</span>
+                          <span className="text-sm text-gray-900 font-bold">{formData.insurance.policyNumber || "N/A"}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between border-b border-gray-200 pb-2">
-                      <span className="text-gray-500 font-medium">Phone:</span>
-                      <span className="text-gray-900 font-bold">{formData.phone || "N/A"}</span>
-                    </div>
+
                   </div>
 
                   <div className="flex gap-4">
@@ -397,18 +469,108 @@ export default function PatientRegistration() {
                 </div>
               )}
 
-              {/* Placeholder for other steps */}
-              {[3, 4].includes(currentStep) && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {(() => {
-                        const StepIcon = steps[currentStep-1].icon;
-                        return <StepIcon className="w-10 h-10 text-gray-300" />;
-                      })()}
+              {/* 3. Medical History Step */}
+              {currentStep === 3 && (
+                <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Medical History</h2>
+                  <p className="text-gray-500 mb-8">Please provide accurate medical history to help doctors offer better treatment.</p>
+                  
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Known Allergies</label>
+                      <textarea 
+                        name="medicalHistory.allergies"
+                        value={formData.medicalHistory.allergies}
+                        onChange={handleInputChange}
+                        rows={2}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all resize-none" 
+                        placeholder="E.g., Peanuts, Penicillin (Leave empty if none)" 
+                      ></textarea>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-400">{steps[currentStep-1].title} Section</h2>
-                    <p className="text-gray-400">Step {currentStep} implementation in progress...</p>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Chronic Diseases</label>
+                      <textarea 
+                        name="medicalHistory.chronicDiseases"
+                        value={formData.medicalHistory.chronicDiseases}
+                        onChange={handleInputChange}
+                        rows={2}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all resize-none" 
+                        placeholder="E.g., Diabetes, Hypertension (Leave empty if none)" 
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Past Surgeries / Procedures</label>
+                      <textarea 
+                        name="medicalHistory.pastSurgeries"
+                        value={formData.medicalHistory.pastSurgeries}
+                        onChange={handleInputChange}
+                        rows={2}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all resize-none" 
+                        placeholder="E.g., Appendectomy in 2018 (Leave empty if none)" 
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Current Medications</label>
+                      <textarea 
+                        name="medicalHistory.currentMedications"
+                        value={formData.medicalHistory.currentMedications}
+                        onChange={handleInputChange}
+                        rows={2}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all resize-none" 
+                        placeholder="E.g., Metformin 500mg daily (Leave empty if none)" 
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Insurance Info Step */}
+              {currentStep === 4 && (
+                <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Insurance Information</h2>
+                  <p className="text-gray-500 mb-8">Add insurance details to streamline the billing process. Leave blank if not applicable.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Insurance Provider Name</label>
+                      <input 
+                        type="text" 
+                        name="insurance.providerName"
+                        value={formData.insurance.providerName}
+                        onChange={handleInputChange}
+                        className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all" 
+                        placeholder="E.g., MetLife, Pragati Life Insurance" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Policy Number</label>
+                      <input 
+                        type="text" 
+                        name="insurance.policyNumber"
+                        value={formData.insurance.policyNumber}
+                        onChange={handleInputChange}
+                        className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-medical-green outline-none transition-all" 
+                        placeholder="POL-123456789" 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Validity / Expiry Date</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input 
+                          type="date" 
+                          name="insurance.validity"
+                          value={formData.insurance.validity}
+                          onChange={handleInputChange}
+                          className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-medical-green outline-none transition-all" 
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
