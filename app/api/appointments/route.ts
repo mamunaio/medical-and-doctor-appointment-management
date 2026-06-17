@@ -27,7 +27,7 @@ async function getAppointments(req: NextRequest, user: AuthUser) {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("patient", "name patientId phone")
+      .populate("patient", "name patientId phone gender dateOfBirth bloodGroup")
       .populate("doctor", "name role")
       .sort({ date: 1, timeSlot: 1 });
       
@@ -49,7 +49,7 @@ async function createAppointment(req: NextRequest, user: AuthUser) {
 
     // Check availability (basic)
     const existing = await Appointment.findOne({ 
-      doctor: data.doctorId, 
+      doctor: data.doctor, 
       date: new Date(data.date), 
       timeSlot: data.timeSlot,
       status: { $nin: ['cancelled'] }
@@ -58,6 +58,15 @@ async function createAppointment(req: NextRequest, user: AuthUser) {
 
     data.appointmentId = await autoId.generateAppointmentId();
     data.bookedBy = user.userId;
+
+    if (data.type === 'follow-up') {
+      data.type = 'follow_up';
+    }
+
+    if (data.visitType === 'online') {
+      data.isOnline = true;
+      data.visitType = 'opd';
+    }
 
     const appointment = await Appointment.create(data);
     return apiResponse.success(appointment, "Appointment booked successfully", 201);

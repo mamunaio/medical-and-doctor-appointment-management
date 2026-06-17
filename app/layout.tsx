@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import ToastProvider from "@/components/ToastProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full font-inter" suppressHydrationWarning>
-        <Toaster position="top-right" />
+        <ToastProvider />
         {children}
       </body>
     </html>

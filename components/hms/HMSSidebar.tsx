@@ -171,7 +171,10 @@ export default function HMSSidebar() {
             </h2>
             <div className="space-y-0.5">
               {section.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                const isActive = pathname === item.href || (
+                  pathname.startsWith(item.href + "/") && 
+                  !filteredNavigation.flatMap(s => s.items).some(other => other.href.length > item.href.length && (pathname === other.href || pathname.startsWith(other.href + "/")))
+                );
                 return (
                   <Link
                     key={item.name}

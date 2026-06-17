@@ -3,6 +3,8 @@ import Appointment from "@/models/Appointment";
 import Invoice from "@/models/Invoice";
 import LabOrder from "@/models/LabOrder";
 import Prescription from "@/models/Prescription";
+import MedicalRecord from "@/models/MedicalRecord";
+import RadiologyOrder from "@/models/RadiologyOrder";
 import IPDAdmission from "@/models/IPDAdmission";
 import EmergencyCase from "@/models/EmergencyCase";
 import InsuranceClaim from "@/models/InsuranceClaim";
@@ -21,6 +23,8 @@ export const autoId = {
   generateInvoiceId: () => generateId(Invoice, 'INV'),
   generateLabOrderId: () => generateId(LabOrder, 'LAB'),
   generatePrescriptionId: () => generateId(Prescription, 'RX'),
+  generateMedicalRecordId: () => generateId(MedicalRecord, 'MR'),
+  generateRadiologyOrderId: () => generateId(RadiologyOrder, 'RAD'),
   generateAdmissionId: () => generateId(IPDAdmission, 'IPD'),
   generateEmergencyId: () => generateId(EmergencyCase, 'EMR'),
   generateClaimId: () => generateId(InsuranceClaim, 'CLM'),
